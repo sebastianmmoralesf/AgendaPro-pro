@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AgendaPro{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('auth.dashboard') }}">
+                <i class="fas fa-calendar-check"></i> AgendaPro
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.dashboard') }}">
+                            <i class="fas fa-home"></i> Inicio
+                        </a>
+                    </li>
+                    {% if current_user.is_admin() %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.panel') }}">
+                            <i class="fas fa-users-cog"></i> Admin Panel
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Notificaciones -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-count position-absolute" id="notificationCount" style="display: none;">0</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" id="notificationList" style="min-width: 320px; max-height: 400px; overflow-y: auto;">
+                            <li class="px-3 py-2 text-muted text-center">Cargando notificaciones...</li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Usuario -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle"></i>
+                            <span class="d-none d-md-inline">{{ current_user.username }}</span>
+                            <span class="role-badge {{ current_user.role }}">{{ current_user.role }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Mi Perfil</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Configuración</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <div class="container-fluid">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="container" style="max-width: 1400px; margin-top: 1rem;">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {% if category == 'success' %}
+                                <i class="fas fa-check-circle me-2"></i>
+                            {% elif category == 'danger' %}
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                            {% elif category == 'warning' %}
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle me-2"></i>
+                            {% endif %}
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% if current_user.is_authenticated %}
+    <script>
+        // Cargar notificaciones
+        function loadNotifications() {
+            fetch('/api/notifications')
+                .then(res => res.json())
+                .then(data => {
+                    const count = data.length;
+                    const badge = document.getElementById('notificationCount');
+                    const list = document.getElementById('notificationList');
+                    
+                    if (count > 0) {
+                        badge.textContent = count > 9 ? '9+' : count;
+                        badge.style.display = 'flex';
+                        
+                        list.innerHTML = '';
+                        data.forEach(notif => {
+                            const item = document.createElement('li');
+                            item.innerHTML = `
+                                <div class="notification-item" onclick="markAsRead(${notif.id})">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="fw-bold text-dark">${notif.message}</div>
+                                            <small class="text-muted"><i class="far fa-clock"></i> ${notif.created_at}</small>
+                                        </div>
+                                        <button class="btn btn-sm btn-link text-success p-0 ms-2" onclick="event.stopPropagation(); markAsRead(${notif.id})">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            list.appendChild(item);
+                        });
+                    } else {
+                        badge.style.display = 'none';
+                        list.innerHTML = '<li class="px-3 py-3 text-muted text-center"><i class="far fa-bell-slash"></i> No hay notificaciones nuevas</li>';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error loading notifications:', err);
+                    const list = document.getElementById('notificationList');
+                    list.innerHTML = '<li class="px-3 py-2 text-muted text-center">Error al cargar notificaciones</li>';
+                });
+        }
+        
+        function markAsRead(id) {
+            fetch(`/api/notifications/${id}/read`, { method: 'POST' })
+                .then(() => {
+                    loadNotifications();
+                })
+                .catch(err => console.error('Error marking as read:', err));
+        }
+        
+        // Cargar inmediatamente y cada 30 segundos
+        loadNotifications();
+        setInterval(loadNotifications, 30000);
+    </script>
+    {% endif %}
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

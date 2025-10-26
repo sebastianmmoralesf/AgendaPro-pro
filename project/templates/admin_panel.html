@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Administración - AgendaPro{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2><i class="fas fa-users-cog"></i> Panel de Administración</h2>
+                <p class="text-muted mb-0">Gestión de usuarios y permisos</p>
+            </div>
+            <a href="{{ url_for('auth.dashboard') }}" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Volver al Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabla de usuarios -->
+    <div class="admin-table">
+        <div class="p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0"><i class="fas fa-users"></i> Usuarios Registrados</h4>
+                <button class="btn btn-success" onclick="refreshUsers()">
+                    <i class="fas fa-sync"></i> Actualizar
+                </button>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Citas</th>
+                            <th>Registro</th>
+                            <th>Estado</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de cambio de rol -->
+<div class="modal fade" id="roleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-tag"></i> Cambiar Rol de Usuario
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Selecciona el nuevo rol para el usuario <strong id="userToChange"></strong>:</p>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="roleOption" id="roleAdmin" value="admin">
+                    <label class="form-check-label" for="roleAdmin">
+                        <span class="role-badge admin">Admin</span> - Acceso total al sistema
+                    </label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="roleOption" id="roleProfesional" value="profesional" checked>
+                    <label class="form-check-label" for="roleProfesional">
+                        <span class="role-badge profesional">Profesional</span> - Gestión de citas
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="roleOption" id="roleCliente" value="cliente">
+                    <label class="form-check-label" for="roleCliente">
+                        <span class="role-badge cliente">Cliente</span> - Solo visualización
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="confirmRoleChange()">
+                    <i class="fas fa-save"></i> Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentUserId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadUsers();
+});
+
+function loadUsers() {
+    fetch('/admin/users')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+            
+            data.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>
+                        <i class="fas fa-user-circle text-primary me-2"></i>
+                        <strong>${user.username}</strong>
+                    </td>
+                    <td>${user.email || 'N/A'}</td>
+                    <td><span class="role-badge ${user.role}">${user.role}</span></td>
+                    <td>
+                        <span class="badge bg-info">${user.appointments_count} citas</span>
+                    </td>
+                    <td>${user.created_at}</td>
+                    <td>
+                        <span class="badge ${user.is_active ? 'bg-success' : 'bg-danger'}">
+                            ${user.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="openRoleModal(${user.id}, '${user.username}', '${user.role}')" title="Cambiar rol">
+                                <i class="fas fa-user-tag"></i>
+                            </button>
+                            <button class="btn btn-outline-${user.is_active ? 'warning' : 'success'}" 
+                                    onclick="toggleUserStatus(${user.id}, ${user.is_active})" 
+                                    title="${user.is_active ? 'Desactivar' : 'Activar'}">
+                                <i class="fas fa-${user.is_active ? 'ban' : 'check'}"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading users:', error);
+            showToast('Error al cargar usuarios', 'danger');
+        });
+}
+
+function openRoleModal(userId, username, currentRole) {
+    currentUserId = userId;
+    document.getElementById('userToChange').textContent = username;
+    
+    // Marcar el rol actual
+    document.getElementById('roleAdmin').checked = currentRole === 'admin';
+    document.getElementById('roleProfesional').checked = currentRole === 'profesional';
+    document.getElementById('roleCliente').checked = currentRole === 'cliente';
+    
+    const modal = new bootstrap.Modal(document.getElementById('roleModal'));
+    modal.show();
+}
+
+function confirmRoleChange() {
+    const selectedRole = document.querySelector('input[name="roleOption"]:checked').value;
+    
+    fetch(`/admin/users/${currentUserId}/change-role`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ role: selectedRole })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('roleModal'));
+        modal.hide();
+        loadUsers();
+        showToast(data.message, 'success');
+    })
+    .catch(error => {
+        console.error('Error changing role:', error);
+        showToast('Error al cambiar el rol', 'danger');
+    });
+}
+
+function toggleUserStatus(userId, currentStatus) {
+    const action = currentStatus ? 'desactivar' : 'activar';
+    
+    if (!confirm(`¿Está seguro de ${action} este usuario?`)) {
+        return;
+    }
+    
+    fetch(`/admin/users/${userId}/toggle-active`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        loadUsers();
+        showToast(data.message, 'success');
+    })
+    .catch(error => {
+        console.error('Error toggling status:', error);
+        showToast('Error al cambiar el estado', 'danger');
+    });
+}
+
+function refreshUsers() {
+    loadUsers();
+    showToast('Lista de usuarios actualizada', 'info');
+}
+
+function showToast(message, type) {
+    const toastContainer = document.createElement('div');
+    toastContainer.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        z-index: 9999;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    const alertClass = type === 'success' ? 'alert-success' : 
+                      type === 'danger' ? 'alert-danger' : 
+                      type === 'warning' ? 'alert-warning' : 'alert-info';
+    
+    const icon = type === 'success' ? 'fa-check-circle' : 
+                 type === 'danger' ? 'fa-exclamation-circle' : 
+                 type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+    
+    toastContainer.innerHTML = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            <i class="fas ${icon} me-2"></i>${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toastContainer);
+    
+    setTimeout(() => {
+        toastContainer.style.animation = 'fadeOut 0.3s ease-out';
+        setTimeout(() => toastContainer.remove(), 300);
+    }, 3000);
+}
+</script>
+{% endblock %}

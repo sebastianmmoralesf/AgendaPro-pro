@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AgendaPro{% endblock %}
+
+{% block extra_css %}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2><i class="fas fa-calendar-alt"></i> Dashboard</h2>
+                <p class="text-muted mb-0">Bienvenido, <strong>{{ current_user.username }}</strong></p>
+            </div>
+            <div>
+                <span class="role-badge {{ current_user.role }}">{{ current_user.role }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="stats-grid" id="statsContainer">
+        <div class="stat-card">
+            <div class="stat-icon primary">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-value" id="stat1">0</div>
+            <div class="stat-label" id="label1">Cargando...</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon success">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-value" id="stat2">0</div>
+            <div class="stat-label" id="label2">Cargando...</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon warning">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-value" id="stat3">0</div>
+            <div class="stat-label" id="label3">Cargando...</div>
+        </div>
+    </div>
+
+    <!-- Calendario -->
+    <div class="calendar-wrapper">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0"><i class="fas fa-calendar"></i> Calendario de Citas</h4>
+            {% if current_user.is_professional() %}
+            <button class="btn btn-success" onclick="openNewAppointmentModal()">
+                <i class="fas fa-plus"></i> Nueva Cita
+            </button>
+            {% endif %}
+        </div>
+        <div id="calendar-container"></div>
+    </div>
+</div>
+
+<!-- Modal de Cita -->
+<div class="modal fade" id="appointmentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">
+                    <i class="fas fa-calendar-plus"></i> Añadir Cita
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="appointmentForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="patient_name" class="form-label">
+                                <i class="fas fa-user-injured"></i> Nombre del Paciente
+                            </label>
+                            <input type="text" class="form-control" id="patient_name" placeholder="Juan Pérez" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="status" class="form-label">
+                                <i class="fas fa-info-circle"></i> Estado
+                            </label>
+                            <select class="form-select" id="status" required>
+                                <option value="Programada">Programada</option>
+                                <option value="Completada">Completada</option>
+                                <option value="Cancelada">Cancelada</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    {% if current_user.is_professional() %}
+                    <div class="mb-3">
+                        <label for="client_id" class="form-label">
+                            <i class="fas fa-user"></i> Asignar a Cliente (Opcional)
+                        </label>
+                        <select class="form-select" id="client_id">
+                            <option value="">-- Sin asignar --</option>
+                        </select>
+                        <small class="text-muted">El cliente recibirá notificaciones sobre esta cita</small>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="start_datetime" class="form-label">
+                                <i class="fas fa-clock"></i> Fecha y Hora de Inicio
+                            </label>
+                            <input type="datetime-local" class="form-control" id="start_datetime" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="end_datetime" class="form-label">
+                                <i class="fas fa-clock"></i> Fecha y Hora de Fin
+                            </label>
+                            <input type="datetime-local" class="form-control" id="end_datetime" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">
+                            <i class="fas fa-sticky-note"></i> Notas
+                        </label>
+                        <textarea class="form-control" id="notes" rows="4" placeholder="Información adicional sobre la cita..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="deleteBtn" style="display: none;">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
+                <div class="ms-auto">
+                    <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveAppointment()">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+
+
