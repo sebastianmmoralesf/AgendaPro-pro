@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
@@ -12,6 +13,12 @@ login_manager = LoginManager()
 def create_app():
     app = Flask(__name__)
     app.config.from_object('project.config.Config')
+    
+    # ✅ NUEVO: Crear carpeta instance si no existe (para Render)
+    instance_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'instance')
+    if not os.path.exists(instance_path):
+        os.makedirs(instance_path)
+        print(f"✅ Carpeta instance creada en: {instance_path}")
     
     db.init_app(app)
     bcrypt.init_app(app)
@@ -60,6 +67,7 @@ def create_app():
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
+            print("✅ Usuario admin creado")
         
         # Crear usuario profesional de prueba
         if not User.query.filter_by(username='doctor').first():
@@ -71,6 +79,7 @@ def create_app():
             doctor.set_password('doctor123')
             db.session.add(doctor)
             db.session.commit()
+            print("✅ Usuario doctor creado")
         
         # Crear usuario cliente de prueba
         if not User.query.filter_by(username='cliente').first():
@@ -82,6 +91,6 @@ def create_app():
             cliente.set_password('cliente123')
             db.session.add(cliente)
             db.session.commit()
+            print("✅ Usuario cliente creado")
     
     return app
-
