@@ -4,6 +4,74 @@
 
 {% block extra_css %}
 <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+<style>
+    /* ✅ Estilos para lista de citas */
+    .appointment-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--primary);
+    }
+    
+    .appointment-card:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .cancelled-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.25rem;
+        border-left: 4px solid #dc3545;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        opacity: 0.85;
+    }
+    
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        color: var(--primary);
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: var(--primary);
+        border-bottom: 3px solid var(--primary);
+        background: none;
+    }
+    
+    .nav-tabs {
+        border-bottom: 2px solid var(--border);
+        margin-bottom: 0;
+    }
+    
+    .tab-content {
+        padding-top: 1.5rem;
+    }
+    
+    /* ✅ Animaciones para las cards */
+    @keyframes slideInCard {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .appointment-card, .cancelled-card {
+        animation: slideInCard 0.3s ease-out;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -46,21 +114,81 @@
         </div>
     </div>
 
-    <!-- Calendario -->
+    <!-- ✅ NUEVO: Tabs para cambiar entre vistas -->
+    {% if current_user.is_professional() %}
+    <div class="calendar-wrapper">
+        <ul class="nav nav-tabs mb-3" id="dashboardTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="calendar-tab" data-bs-toggle="tab" data-bs-target="#calendar-pane" type="button" role="tab">
+                    <i class="fas fa-calendar"></i> Calendario
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="list-tab" data-bs-toggle="tab" data-bs-target="#list-pane" type="button" role="tab">
+                    <i class="fas fa-list"></i> Lista de Citas
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="cancelled-tab" data-bs-toggle="tab" data-bs-target="#cancelled-pane" type="button" role="tab">
+                    <i class="fas fa-ban"></i> Citas Canceladas
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="dashboardTabContent">
+            <!-- Tab 1: Calendario -->
+            <div class="tab-pane fade show active" id="calendar-pane" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0"><i class="fas fa-calendar"></i> Calendario de Citas</h4>
+                    <button class="btn btn-success" onclick="openNewAppointmentModal()">
+                        <i class="fas fa-plus"></i> Nueva Cita
+                    </button>
+                </div>
+                <div id="calendar-container"></div>
+            </div>
+
+            <!-- Tab 2: Lista de Citas -->
+            <div class="tab-pane fade" id="list-pane" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0"><i class="fas fa-list"></i> Gestión de Citas</h4>
+                    <button class="btn btn-success" onclick="openNewAppointmentModal()">
+                        <i class="fas fa-plus"></i> Nueva Cita
+                    </button>
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    <strong>Acciones disponibles:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li><i class="fas fa-check text-success"></i> Completar citas que ya pasaron</li>
+                        <li><i class="fas fa-times text-danger"></i> Cancelar citas programadas</li>
+                    </ul>
+                </div>
+                <div id="appointments-list"></div>
+            </div>
+
+            <!-- Tab 3: Citas Canceladas -->
+            <div class="tab-pane fade" id="cancelled-pane" role="tabpanel">
+                <h4 class="mb-3"><i class="fas fa-history"></i> Historial de Citas Canceladas</h4>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    Este es un registro histórico de citas canceladas. Solo lectura.
+                </div>
+                <div id="cancelled-list"></div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Vista simplificada para clientes -->
     <div class="calendar-wrapper">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="mb-0"><i class="fas fa-calendar"></i> Calendario de Citas</h4>
-            {% if current_user.is_professional() %}
-            <button class="btn btn-success" onclick="openNewAppointmentModal()">
-                <i class="fas fa-plus"></i> Nueva Cita
-            </button>
-            {% endif %}
+            <h4 class="mb-0"><i class="fas fa-calendar"></i> Mis Citas Programadas</h4>
         </div>
         <div id="calendar-container"></div>
     </div>
+    {% endif %}
 </div>
 
-<!-- Modal de Cita -->
+<!-- Modal de Cita (SIN selector de estado) -->
 <div class="modal fade" id="appointmentModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -79,29 +207,19 @@
                             </label>
                             <input type="text" class="form-control" id="patient_name" placeholder="Juan Pérez" required>
                         </div>
+                        
+                        {% if current_user.is_professional() %}
                         <div class="col-md-6 mb-3">
-                            <label for="status" class="form-label">
-                                <i class="fas fa-info-circle"></i> Estado
+                            <label for="client_id" class="form-label">
+                                <i class="fas fa-user"></i> Asignar a Cliente (Opcional)
                             </label>
-                            <select class="form-select" id="status" required>
-                                <option value="Programada">Programada</option>
-                                <option value="Completada">Completada</option>
-                                <option value="Cancelada">Cancelada</option>
+                            <select class="form-select" id="client_id">
+                                <option value="">-- Sin asignar --</option>
                             </select>
+                            <small class="text-muted">El cliente recibirá notificaciones</small>
                         </div>
+                        {% endif %}
                     </div>
-                    
-                    {% if current_user.is_professional() %}
-                    <div class="mb-3">
-                        <label for="client_id" class="form-label">
-                            <i class="fas fa-user"></i> Asignar a Cliente (Opcional)
-                        </label>
-                        <select class="form-select" id="client_id">
-                            <option value="">-- Sin asignar --</option>
-                        </select>
-                        <small class="text-muted">El cliente recibirá notificaciones sobre esta cita</small>
-                    </div>
-                    {% endif %}
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -117,17 +235,25 @@
                             <input type="datetime-local" class="form-control" id="end_datetime" required>
                         </div>
                     </div>
+                    
                     <div class="mb-3">
                         <label for="notes" class="form-label">
                             <i class="fas fa-sticky-note"></i> Notas
                         </label>
-                        <textarea class="form-control" id="notes" rows="4" placeholder="Información adicional sobre la cita..."></textarea>
+                        <textarea class="form-control" id="notes" rows="3" placeholder="Información adicional..."></textarea>
+                    </div>
+                    
+                    <!-- ✅ QUITADO: Ya no hay selector de estado aquí -->
+                    <div class="alert alert-info small mb-0">
+                        <i class="fas fa-info-circle"></i> 
+                        La cita se creará como <strong>"Programada"</strong>. 
+                        Podrás completarla o cancelarla desde la pestaña "Lista de Citas".
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-danger" id="deleteBtn" style="display: none;">
-                    <i class="fas fa-trash"></i> Eliminar
+                    <i class="fas fa-trash"></i> Eliminar Permanentemente
                 </button>
                 <div class="ms-auto">
                     <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">
@@ -145,8 +271,16 @@
 
 {% block extra_js %}
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+<script>
+// ✅ Cargar lista al cambiar de tab
+document.getElementById('list-tab')?.addEventListener('shown.bs.tab', function() {
+    loadAppointmentsList();
+});
+
+document.getElementById('cancelled-tab')?.addEventListener('shown.bs.tab', function() {
+    loadCancelledAppointments();
+});
+</script>
 {% endblock %}
-
-
