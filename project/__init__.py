@@ -84,3 +84,4 @@ def create_app():
             db.session.commit()
     
     return app
+
