@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Registro - AgendaPro{% endblock %}
+{% block title %}Registro - AgendaNova{% endblock %}
 
 {% block content %}
 <div class="auth-container">
@@ -8,7 +8,7 @@
         <h3 class="text-center">
             <i class="fas fa-user-plus"></i> Crear Cuenta
         </h3>
-        <p class="text-center text-muted mb-4">Únete a AgendaPro hoy</p>
+        <p class="text-center text-muted mb-4">Únete a AgendaNova hoy</p>
         
         <form method="POST" action="{{ url_for('auth.register') }}">
             <div class="mb-3">
@@ -91,3 +91,4 @@ document.getElementById('googleRegisterBtn').addEventListener('click', function(
 });
 </script>
 {% endblock %}
+
