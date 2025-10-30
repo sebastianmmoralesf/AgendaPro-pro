@@ -38,6 +38,11 @@ body {
     to { transform: translateX(0); }
 }
 
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
 .fade-in {
     animation: fadeIn 0.6s ease-out;
 }
@@ -324,6 +329,96 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
+/* ✅ NUEVO: Tabs personalizados */
+.nav-tabs .nav-link {
+    border: none;
+    color: #6c757d;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+    border-radius: 8px 8px 0 0;
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--primary);
+    background: rgba(79, 70, 229, 0.05);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary);
+    border-bottom: 3px solid var(--primary);
+    background: none;
+}
+
+.nav-tabs {
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 0;
+}
+
+.tab-content {
+    padding-top: 1.5rem;
+}
+
+/* ✅ NUEVO: Lista de citas */
+.appointment-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--primary);
+    margin-bottom: 1rem;
+}
+
+.appointment-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.appointment-card h6 {
+    color: var(--dark);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.appointment-card .badge {
+    font-size: 0.7rem;
+    padding: 0.35rem 0.65rem;
+    font-weight: 600;
+}
+
+/* ✅ NUEVO: Citas canceladas */
+.cancelled-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.25rem;
+    border-left: 4px solid #dc3545;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    opacity: 0.85;
+    margin-bottom: 1rem;
+}
+
+.cancelled-card h6 {
+    color: #6c757d;
+    font-weight: 600;
+}
+
+/* ✅ Animaciones para cards */
+@keyframes slideInCard {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.appointment-card, .cancelled-card {
+    animation: slideInCard 0.3s ease-out;
+}
+
 /* Modal mejorado */
 .modal-content {
     border-radius: 20px;
@@ -458,6 +553,29 @@ body {
     background: var(--light);
 }
 
+/* ✅ NUEVO: Botones de acción en lista */
+.btn-group-sm .btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.875rem;
+    border-radius: 8px;
+}
+
+.btn-group-sm .btn i {
+    font-size: 0.875rem;
+}
+
+/* ✅ NUEVO: Estado loading */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .auth-card {
@@ -474,5 +592,47 @@ body {
     
     .calendar-wrapper {
         padding: 1rem;
+    }
+    
+    .nav-tabs .nav-link {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .appointment-card,
+    .cancelled-card {
+        padding: 1rem;
+    }
+    
+    .btn-group-sm {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-container {
+        padding: 0 0.5rem;
+    }
+    
+    .dashboard-header {
+        padding: 1rem;
+    }
+    
+    .dashboard-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .calendar-wrapper {
+        padding: 0.75rem;
     }
 }
