@@ -7,7 +7,7 @@ class Config:
     # Database
     # En Render, usar SQLite dentro de /opt/render/project/src/instance
     # Para mayor escalabilidad, considera PostgreSQL
-    DATABASE_PATH = os.environ.get('DATABASE_PATH', 'instance/database.db')
+    DATABASE_PATH = os.environ.get('DATABASE_PATH', '/tmp/database.db')
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or f'sqlite:///{DATABASE_PATH}'
     
     # Si usas PostgreSQL en Render
@@ -25,3 +25,4 @@ class Config:
     # Flask Environment
     FLASK_ENV = os.environ.get('FLASK_ENV', 'production')
     DEBUG = os.environ.get('FLASK_ENV') != 'production'
+
